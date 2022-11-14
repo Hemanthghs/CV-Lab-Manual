@@ -535,4 +535,103 @@ model.add(BatchNormalization())
 model.add(Dense(num_classes))
 model.add(Activation('softmax'))
 
+#############################################################################################################################
+#############################################################################################################################
+
+
+
+import keras
+from keras.preprocessing.image import ImageDataGenerator
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
+from tensorflow.keras.optimizers import Adam
+import tensorflow as tf 
+
+training_datagen = ImageDataGenerator(rescale=1./255,
+                                      rotation_range=40,
+                                      width_shift_range=0.2,
+                                      height_shift_range=0.2,
+                                      shear_range=0.2,
+                                      zoom_range=0.2,
+                                      horizontal_flip=True,
+                                      fill_mode='nearest')
+
+
+training_data_path = "/content/drive/MyDrive/4-1 Mini Project/data3"
+
+
+training_data = training_datagen.flow_from_directory(training_data_path, target_size=(224, 224), class_mode='binary')
+
+
+plot_image = plt.figure(figsize=(10,10))
+
+plot1 = plot_image.add_subplot(2,2,1)
+plot2 = plot_image.add_subplot(2,2,2)
+plot3 = plot_image.add_subplot(2,2,3)
+plot4 = plot_image.add_subplot(2,2,4)
+
+plot1.matshow(plt.imread(training_data.filepaths[2]))
+plot2.matshow(plt.imread(training_data.filepaths[13]))
+plot3.matshow(plt.imread(training_data.filepaths[24]))
+plot4.matshow(plt.imread(training_data.filepaths[32]))
+
+
+
+from tensorflow.keras.applications.mobilenet import MobileNet
+
+mobilenet = MobileNet(
+    input_shape=None,
+    include_top=True,
+    weights="imagenet",
+    input_tensor=None,
+    pooling=None,
+    classes=1000,
+)
+
+for layer in mobilenet.layers:
+  layer.trainalbe = False
+
+
+mobilenet_model = keras.Sequential()
+mobilenet_model.add(mobilenet)
+
+
+mobilenet_model.add(keras.layers.Dense(units=64,activation="relu"))
+mobilenet_model.add(keras.layers.Dense(units=128,activation="relu"))
+mobilenet_model.add(keras.layers.Dense(units=1,activation="sigmoid"))
+
+mobilenet_model.summary()
+
+
+mobilenet_model.compile(optimizer = Adam(learning_rate = 0.0001), loss='binary_crossentropy', metrics=['accuracy'])
+
+
+mobilenet_model.fit(training_data, epochs=15)
+
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
+from keras.models import load_model 
+import os
+
+
+
+def predict_output(img_path):
+    img = cv2.imread(img_path)
+    img = cv2.resize(img,(224,224))
+    img = img/255
+    img = np.expand_dims(img,axis=0)
+    prediction = mobilenet_model.predict(img)
+    prediction = prediction >= 0.5
+    return prediction
+
+
+predict_output("/content/drive/MyDrive/4-1 Mini Project/data3/Headset/pic11.png")
+
+
+
+
 
